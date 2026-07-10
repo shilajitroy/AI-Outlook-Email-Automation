@@ -1,0 +1,446 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftOutlookTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ed590e7b-99c7-487a-83f6-192761b9d24d",
+      "name": "Microsoft Outlook Trigger",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "saw64jdA4JTS2vYT",
+          "name": "Microsoft Outlook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8c28e86c-69af-43e6-8fc5-1072784b7c09",
+              "leftValue": "={{ $json.from }}",
+              "rightValue": "shilajitroy14@gmail.com",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "8d69b0f8-d082-4d92-9d56-717153cc7b62",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "8TiHafyR6Eg8DxIL",
+          "mode": "list",
+          "cachedResultName": "processed_emails",
+          "cachedResultUrl": "/projects/vP6O3o5QCACbkoHC/datatables/8TiHafyR6Eg8DxIL"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "email_id",
+              "keyValue": "={{ $json.id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "b858401d-f7f2-46bc-8e4d-e79f1fae7ab2",
+      "name": "Get row(s)",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "053c5497-6c7b-4bad-8d93-b864333e4eee",
+              "leftValue": "={{ $json.email_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        0
+      ],
+      "id": "ec6d608d-5587-4405-af70-f9dc960ac5bd",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": {
+          "__rl": true,
+          "value": "{{$node[\"Microsoft Outlook Trigger\"].json.id}}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        2256,
+        368
+      ],
+      "id": "2364064b-ed7b-4d2a-a8ca-0a195c80ac7b",
+      "name": "Get a message",
+      "webhookId": "05ac5f66-4ba4-4ae5-9338-39cc2955e23b",
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "saw64jdA4JTS2vYT",
+          "name": "Microsoft Outlook account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        864,
+        112
+      ],
+      "id": "23cf9d93-81ad-417a-870f-1a5b6ff29e46",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GhIKSNxKhzA2mHro",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an email classification service.\n\nYour task is to determine whether an email should be forwarded.\n\nForward the email ONLY if it is:\n- Business related\n- Client communication\n- Production issue\n- Incident\n- Escalation\n- Action required\n- High priority\n- Work-related\n\nIgnore the email if it is:\n- Advertisement\n- Marketing\n- Newsletter\n- Promotion\n- Spam\n- Calendar invitation\n- Social notification\n- Personal email\n- Greeting only\n- Automated notification with no action required\n\nIMPORTANT:\nReturn EXACTLY one word.\n\nFORWARD\n\nor\n\nIGNORE\n\nDo not explain your answer.\nDo not return JSON.\nDo not use markdown.\nDo not include punctuation.\n\nEmail Subject:\n{{ $json.subject }}\n\nEmail Body:\n{{ $json.body.content }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        960,
+        -64
+      ],
+      "id": "b1d4e50a-749d-4fb0-95e6-abdb9454eded",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.microsoft.com/v1.0/me/messages/{{$node[\"Microsoft Outlook Trigger\"].json.id}}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        784,
+        -112
+      ],
+      "id": "a08bf22b-e812-4f97-ace6-aa392746d3c9",
+      "name": "Get Full Message",
+      "credentials": {
+        "microsoftOAuth2Api": {
+          "id": "YYqNHWtehISQ7yCa",
+          "name": "Microsoft account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "98d8fcc0-02fc-4493-96ca-c99d3ea7c622",
+              "leftValue": "={{ $json.text.trim() }}",
+              "rightValue": "FORWARD",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1088,
+        240
+      ],
+      "id": "1b8faa4f-63bc-41cd-81d2-893e1170d2fd",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.microsoft.com/v1.0/me/messages/{{$node[\"Get Full Message\"].json.id}}/forward",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"comment\": \"Automatically forwarded by n8n.\",\n  \"toRecipients\": [\n    {\n      \"emailAddress\": {\n        \"address\": \"shilijitroy@gmail.com\"\n      }\n    }\n  ],\n  \"ccRecipients\": [\n    {\n      \"emailAddress\": {\n        \"address\": \"shilijitroy@gmail.com\"\n      }\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1280,
+        128
+      ],
+      "id": "0f4c0968-c7d6-4f28-8632-78e2df51e226",
+      "name": "Forward Email",
+      "credentials": {
+        "microsoftOAuth2Api": {
+          "id": "YYqNHWtehISQ7yCa",
+          "name": "Microsoft account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "8TiHafyR6Eg8DxIL",
+          "mode": "list",
+          "cachedResultName": "processed_emails",
+          "cachedResultUrl": "/projects/vP6O3o5QCACbkoHC/datatables/8TiHafyR6Eg8DxIL"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email_id": "={{ $(\"Get Full Message\").item.json.id }}",
+            "processed_at": "={{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "email_id",
+              "displayName": "email_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "processed_at",
+              "displayName": "processed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "optimizeBulk": false
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1488,
+        128
+      ],
+      "id": "604ac196-aded-4788-862e-8c1091ec8c34",
+      "name": "Insert row"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Microsoft Outlook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get Full Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Get a message": {
+      "main": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Full Message": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Forward Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Forward Email": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "63066357-cb68-4b28-b6f2-66f99ef5865c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d49c9f8918711ae84d39a09b4e8585196d0395966e396c7a846ef19eabf21368"
+  },
+  "nodeGroups": [],
+  "id": "dW2B2HRn6zoCq51f",
+  "tags": []
+}
